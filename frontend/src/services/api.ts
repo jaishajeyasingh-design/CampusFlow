@@ -25,9 +25,13 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('campusflow_token');
       localStorage.removeItem('campusflow_user');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('campusflow:auth:expired'));
+      }
     }
     return Promise.reject(error);
   }
 );
+
 
 export default api;
