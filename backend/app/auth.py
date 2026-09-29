@@ -1,6 +1,8 @@
+import os
 import datetime
 from typing import List, Optional, Callable
 import jwt
+from dotenv import load_dotenv
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status, Path
 from fastapi.security import OAuth2PasswordBearer
@@ -9,7 +11,15 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
 
-SECRET_KEY = "campusflow-super-secret-key-change-in-production-hackathon-2026"
+# Load .env file from workspace/backend if present
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+load_dotenv(dotenv_path=env_path)
+load_dotenv()
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is missing. Please set SECRET_KEY in environment or .env file.")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours for hackathon ease
 

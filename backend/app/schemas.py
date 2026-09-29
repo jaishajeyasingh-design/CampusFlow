@@ -73,7 +73,8 @@ class TimetableStructureResponse(BaseModel):
 
 # OD Schemas
 class ODRequestCreate(BaseModel):
-    event_id: int
+    event_id: Optional[int] = None
+    registration_id: Optional[int] = None
 
 class ODApprovalRequest(BaseModel):
     status: str  # APPROVED, REJECTED
@@ -89,50 +90,6 @@ class ODPeriodSnapshotResponse(BaseModel):
     start_time: str
     end_time: str
     period_type: str
-
-class ODRequestResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    student_id: int
-    event_id: int
-    mentor_id: int
-    status: str
-    mentor_remark: Optional[str]
-    created_at: datetime
-    period_snapshots: List[ODPeriodSnapshotResponse] = []
-
-# Event Schemas
-class EventCreate(BaseModel):
-    club_id: int
-    title: str
-    description: Optional[str] = None
-    category: Optional[str] = None
-    venue: str
-    start_time: datetime
-    end_time: datetime
-    capacity: int
-
-class EventApprovalRequest(BaseModel):
-    status: str  # APPROVED, REJECTED
-    faculty_remark: Optional[str] = None
-
-class EventResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    club_id: int
-    title: str
-    description: Optional[str]
-    category: Optional[str]
-    venue: str
-    start_time: datetime
-    end_time: datetime
-    capacity: int
-    status: str
-    faculty_remark: Optional[str]
-    created_by_id: int
-    created_at: datetime
 
 # Club Schemas
 class ClubUpdate(BaseModel):
@@ -154,3 +111,65 @@ class ClubResponse(BaseModel):
     faculty_coordinator_id: Optional[int]
     status: str
     created_at: datetime
+
+# Event Schemas
+class EventCreate(BaseModel):
+    club_id: int
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    venue: str
+    start_time: datetime
+    end_time: datetime
+    capacity: int
+
+class EventApprovalRequest(BaseModel):
+    status: Optional[str] = "APPROVED"  # APPROVED, REJECTED
+    faculty_remark: Optional[str] = None
+
+class EventRejectRequest(BaseModel):
+    reason: str
+
+class EventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    club_id: int
+    title: str
+    description: Optional[str]
+    category: Optional[str]
+    venue: str
+    start_time: datetime
+    end_time: datetime
+    capacity: int
+    status: str
+    faculty_remark: Optional[str]
+    created_by_id: int
+    created_at: datetime
+    club: Optional[ClubResponse] = None
+
+class EventRegistrationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    event_id: int
+    student_id: int
+    status: str
+    qr_code: Optional[str] = None
+    registered_at: datetime
+    event: Optional[EventResponse] = None
+
+class ODRequestResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    student_id: int
+    event_id: int
+    mentor_id: int
+    status: str
+    mentor_remark: Optional[str] = None
+    created_at: datetime
+    period_snapshots: List[ODPeriodSnapshotResponse] = []
+    event: Optional[EventResponse] = None
+
+
