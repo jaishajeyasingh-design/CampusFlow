@@ -18,6 +18,27 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface RegisterData {
+  email: string;
+  password: string;
+  full_name: string;
+  system_role: SystemRole;
+  ra_number?: string | null;
+  department?: string | null;
+  class_mentor_id?: number | null;
+}
+
+export interface ApiValidationError {
+  loc: (string | number)[];
+  msg: string;
+  type: string;
+}
+
+export interface ApiErrorResponse {
+  detail?: string | ApiValidationError[];
+  message?: string;
+}
+
 export interface Club {
   id: number;
   name: string;
