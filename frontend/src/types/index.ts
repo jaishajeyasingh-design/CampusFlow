@@ -46,4 +46,33 @@ export interface Event {
   faculty_remark?: string;
   created_by_id: number;
   created_at: string;
+  club?: Club;
 }
+
+export interface RegisterEventResponse {
+  message: string;
+  registration_id: number;
+  qr_code: string;
+}
+
+export interface EventRegistration {
+  id: number;
+  event_id: number;
+  student_id: number;
+  status: 'REGISTERED' | 'ATTENDED' | 'CANCELLED';
+  qr_code?: string;
+  registered_at?: string;
+  event?: Event;
+}
+
+export interface ODRequest {
+  id: number;
+  student_id: number;
+  event_id: number;
+  mentor_id: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  mentor_remark?: string;
+  created_at: string;
+  event?: Event;
+}
+

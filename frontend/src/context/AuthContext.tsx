@@ -1,21 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import type { User, AuthResponse } from '../types';
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
-  logout: () => void;
-  switchDemoRole: (email: string) => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import type { AuthResponse } from '../types';
+import { AuthContext } from './authContextDef';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
+  const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('campusflow_user');
     return saved ? JSON.parse(saved) : null;
   });
@@ -24,11 +13,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [loading, setLoading] = useState<boolean>(true);
 
+  const logout = React.useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('campusflow_token');
+    localStorage.removeItem('campusflow_user');
+  }, []);
+
   useEffect(() => {
     const verifyUser = async () => {
       if (token) {
         try {
-          const res = await api.get<User>('/auth/me');
+          const res = await api.get('/auth/me');
           setUser(res.data);
           localStorage.setItem('campusflow_user', JSON.stringify(res.data));
         } catch (err) {
@@ -39,7 +35,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     };
     verifyUser();
-  }, [token]);
+  }, [token, logout]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      logout();
+    };
+    window.addEventListener('campusflow:auth:expired', handleAuthExpired);
+    return () => {
+      window.removeEventListener('campusflow:auth:expired', handleAuthExpired);
+    };
+  }, [logout]);
 
   const login = async (email: string, password: string) => {
     const res = await api.post<AuthResponse>('/auth/login', { email, password });
@@ -57,13 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('campusflow_user', JSON.stringify(res.data.user));
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('campusflow_token');
-    localStorage.removeItem('campusflow_user');
-  };
-
   const switchDemoRole = async (email: string) => {
     await login(email, "password123");
   };
@@ -75,10 +74,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export default AuthProvider;
