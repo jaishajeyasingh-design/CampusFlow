@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import type { AuthResponse } from '../types';
+import type { AuthResponse, RegisterData } from '../types';
 import { AuthContext } from './authContextDef';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('campusflow_user', JSON.stringify(res.data.user));
   };
 
-  const register = async (userData: any) => {
+  const register = async (userData: RegisterData) => {
     const res = await api.post<AuthResponse>('/auth/register', userData);
     setToken(res.data.access_token);
     setUser(res.data.user);
