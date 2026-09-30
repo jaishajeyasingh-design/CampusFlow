@@ -151,6 +151,20 @@ def submit_event_for_approval(
     )
     db.add(audit)
     db.commit()
+
+    # Trigger notification to faculty coordinator
+    from app.services import notification_service
+    if event.club and event.club.faculty_coordinator_id:
+        notification_service.create_notification(
+            db,
+            user_id=event.club.faculty_coordinator_id,
+            title="Event Submitted for Approval",
+            message=f"Event '{event.title}' has been submitted for faculty approval.",
+            type="EVENT_SUBMITTED",
+            entity_type="EVENT",
+            entity_id=event.id
+        )
+
     db.refresh(event)
     return event
 
@@ -214,6 +228,25 @@ def approve_or_reject_event(
     )
     db.add(audit)
     db.commit()
+
+    # Trigger notification to event creator (Club Admin)
+    from app.services import notification_service
+    notif_type = "EVENT_APPROVED" if target_status == "APPROVED" else "EVENT_REJECTED"
+    notif_title = "Event Approved" if target_status == "APPROVED" else "Event Rejected"
+    notif_msg = f"Your event '{event.title}' has been approved." if target_status == "APPROVED" else f"Your event '{event.title}' was rejected."
+    if target_status == "REJECTED" and event.faculty_remark:
+        notif_msg += f" Reason: {event.faculty_remark}"
+
+    notification_service.create_notification(
+        db,
+        user_id=event.created_by_id,
+        title=notif_title,
+        message=notif_msg,
+        type=notif_type,
+        entity_type="EVENT",
+        entity_id=event.id
+    )
+
     db.refresh(event)
     return event
 
@@ -252,8 +285,23 @@ def resubmit_event(
     )
     db.add(audit)
     db.commit()
+
+    # Trigger notification to faculty coordinator
+    from app.services import notification_service
+    if event.club and event.club.faculty_coordinator_id:
+        notification_service.create_notification(
+            db,
+            user_id=event.club.faculty_coordinator_id,
+            title="Event Resubmitted",
+            message=f"Event '{event.title}' has been resubmitted for faculty approval.",
+            type="EVENT_RESUBMITTED",
+            entity_type="EVENT",
+            entity_id=event.id
+        )
+
     db.refresh(event)
     return event
+
 
 
 @router.post("/{event_id}/start", response_model=schemas.EventResponse)
@@ -306,8 +354,14 @@ def complete_event(
     )
     db.add(audit)
     db.commit()
+
+    # Automatically generate certificates for attending students upon event completion
+    from app.services import certificate_service
+    certificate_service.generate_certificates_for_event(db, event.id)
+
     db.refresh(event)
     return event
+
 
 
 @router.post("/{event_id}/cancel", response_model=schemas.EventResponse)
@@ -388,4 +442,21 @@ def register_student_for_event(
     )
     db.add(reg)
     db.commit()
+
+    # Trigger notification to event organizer / Club Admin
+    from app.services import notification_service
+    recipient_id = event.created_by_id or (event.club.club_admin_id if event.club else None)
+    if recipient_id:
+        notification_service.create_notification(
+            db,
+            user_id=recipient_id,
+            title="New Event Registration",
+            message=f"Student {current_user.full_name} registered for your event '{event.title}'.",
+            type="EVENT_REGISTERED",
+            entity_type="EVENT",
+            entity_id=event.id,
+            prevent_duplicates=False
+        )
+
     return {"message": "Registration successful", "registration_id": reg.id, "qr_code": reg.qr_code}
+

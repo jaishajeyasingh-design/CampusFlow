@@ -172,4 +172,214 @@ class ODRequestResponse(BaseModel):
     period_snapshots: List[ODPeriodSnapshotResponse] = []
     event: Optional[EventResponse] = None
 
+# Badge Schemas
+class BadgeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str
+    icon: str
+    criteria: str
+
+class StudentBadgeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    badge_id: int
+    name: str
+    description: str
+    icon: str
+    criteria: str
+    awarded_at: datetime
+
+# Certificate Schemas
+class CertificateResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    event_id: int
+    student_id: int
+    certificate_number: str
+    verification_code: str
+    event_title: Optional[str] = None
+    event_date: Optional[datetime] = None
+    issue_date: datetime
+    pdf_url: Optional[str] = None
+
+class CertificateVerifyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    certificate_number: str
+    verification_code: str
+    student_name: str
+    event_title: str
+    event_date: datetime
+    issue_date: datetime
+    certificate_type: str = "Certificate of Participation"
+    status: str = "VALID"
+
+# Notification Schemas
+class NotificationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    type: Optional[str] = None
+    title: str
+    message: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[int] = None
+    link: Optional[str] = None
+    is_read: bool
+    created_at: datetime
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int
+
+# Analytics Schemas
+class AnalyticsOverviewResponse(BaseModel):
+    total_users: int
+    total_students: int
+    total_faculty: int
+    total_clubs: int
+    total_events: int
+    draft_events: int
+    pending_approval_events: int
+    approved_events: int
+    rejected_events: int
+    ongoing_events: int
+    completed_events: int
+    cancelled_events: int
+    total_registrations: int
+    total_attendance_records: int
+    total_od_requests: int
+    pending_od_requests: int
+    approved_od_requests: int
+    rejected_od_requests: int
+    total_certificates_issued: int
+    total_badges_awarded: int
+
+class EventAnalyticsResponse(BaseModel):
+    total_events: int
+    draft: int
+    pending: int
+    approved: int
+    rejected: int
+    ongoing: int
+    completed: int
+    cancelled: int
+    total_capacity: int
+    total_registrations: int
+    capacity_utilization_pct: float
+
+class EventRegistrationStat(BaseModel):
+    event_id: int
+    event_title: str
+    registration_count: int
+
+class ClubRegistrationStat(BaseModel):
+    club_id: int
+    club_name: str
+    registration_count: int
+
+class RegistrationAnalyticsResponse(BaseModel):
+    total_registrations: int
+    average_registrations_per_event: float
+    registrations_by_event: List[EventRegistrationStat]
+    registrations_by_club: List[ClubRegistrationStat]
+
+class ClubAttendanceStat(BaseModel):
+    club_id: int
+    club_name: str
+    attendance_count: int
+
+class AttendanceAnalyticsResponse(BaseModel):
+    total_attendance_records: int
+    unique_students_attended: int
+    attendance_rate_pct: float
+    attendance_by_club: List[ClubAttendanceStat]
+
+class ODAnalyticsResponse(BaseModel):
+    total_od_requests: int
+    pending: int
+    approved: int
+    rejected: int
+    total_affected_periods: int
+
+class EventCertificateStat(BaseModel):
+    event_id: int
+    event_title: str
+    certificate_count: int
+
+class CertificateAnalyticsResponse(BaseModel):
+    total_certificates_issued: int
+    certificates_by_event: List[EventCertificateStat]
+
+class BadgeTypeStat(BaseModel):
+    badge_id: int
+    badge_name: str
+    awarded_count: int
+
+class BadgeAnalyticsResponse(BaseModel):
+    total_badges_awarded: int
+    unique_students_with_badges: int
+    badges_by_type: List[BadgeTypeStat]
+
+class StudentAnalyticsResponse(BaseModel):
+    events_registered: int
+    events_attended: int
+    attendance_rate: float
+    od_requests: int
+    od_approved: int
+    od_rejected: int
+    certificates: int
+    badges: int
+    clubs_participated: int
+
+class ClubAnalyticsResponse(BaseModel):
+    club_id: int
+    club_name: str
+    total_events: int
+    approved_events: int
+    rejected_events: int
+    completed_events: int
+    total_registrations: int
+    unique_participants: int
+    total_attendance: int
+    attendance_rate_pct: float
+    od_requests: int
+    certificates_issued: int
+    badges_earned: int
+
+
+class MessageCreate(BaseModel):
+    recipient_id: int
+    context_type: str
+    context_id: int
+    message: str
+
+
+class MessageResponse(BaseModel):
+    id: int
+    sender_id: int
+    recipient_id: int
+    context_type: str
+    context_id: int
+    message: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UnreadMessageCountResponse(BaseModel):
+    unread_count: int
+
+
+
+
+
+
 

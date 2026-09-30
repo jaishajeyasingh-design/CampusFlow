@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import notificationService from '../services/notificationService';
 
 import { 
   LayoutDashboard, Users, Shield, Calendar, Award, 
-  FileText, Bell, LogOut, Sparkles, ChevronDown, CheckCircle2,
-  Clock, MessageSquare, BookOpen, Layers
+  Bell, LogOut, Sparkles, ChevronDown, CheckCircle2,
+  Clock, MessageSquare, Layers, Plus
 } from 'lucide-react';
 
 interface DashboardShellProps {
@@ -17,6 +18,15 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (user) {
+      notificationService.getUnreadNotificationCount()
+        .then(res => setUnreadNotifCount(res.unread_count))
+        .catch(() => setUnreadNotifCount(0));
+    }
+  }, [user, location.pathname]);
 
   if (!user) return null;
 
@@ -44,11 +54,9 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       case 'SUPER_ADMIN':
         return [
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { to: '/users', label: 'User Management', icon: Users },
-          { to: '/clubs', label: 'Clubs', icon: Shield },
-          { to: '/timetable', label: 'Timetable Manager', icon: Clock },
-          { to: '/audit-logs', label: 'Audit Logs', icon: FileText },
-          { to: '/analytics', label: 'Analytics', icon: Layers },
+          { to: '/super-admin/timetable', label: 'Timetable Manager', icon: Clock },
+          { to: '/faculty/analytics', label: 'Analytics', icon: Layers },
+          { to: '/student/notifications', label: 'Notifications', icon: Bell, badge: unreadNotifCount },
         ];
       case 'ADMIN':
         return [
@@ -63,28 +71,28 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { to: '/faculty/event-approvals', label: 'Event Approvals', icon: CheckCircle2 },
           { to: '/faculty/od-approvals', label: 'OD Approvals', icon: Clock },
+          { to: '/faculty/analytics', label: 'Analytics', icon: Layers },
           { to: '/faculty/messages', label: 'Messages', icon: MessageSquare },
-          { to: '/faculty/student-activity', label: 'Student Participation', icon: BookOpen },
+          { to: '/student/notifications', label: 'Notifications', icon: Bell, badge: unreadNotifCount },
         ];
       case 'CLUB_ADMIN':
         return [
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { to: '/club/events', label: 'Event Manager', icon: Calendar },
-          { to: '/club/registrations', label: 'Registrations', icon: Users },
-          { to: '/club/attendance', label: 'QR Attendance', icon: CheckCircle2 },
-          { to: '/club/roles', label: 'Dynamic Roles', icon: Shield },
-          { to: '/club/certificates', label: 'Certificates', icon: Award },
+          { to: '/club-admin/events', label: 'Events Manager', icon: Calendar },
+          { to: '/club-admin/events/create', label: 'Create Event', icon: Plus },
+          { to: '/club-admin/registrations', label: 'Registrations', icon: Users },
         ];
       case 'STUDENT':
       default:
         return [
-          { to: '/dashboard', label: 'Passport Dashboard', icon: LayoutDashboard },
-          { to: '/student/clubs', label: 'Explore Clubs', icon: Shield },
-          { to: '/student/events', label: 'Browse Events', icon: Calendar },
-          { to: '/student/registrations', label: 'My Registrations', icon: CheckCircle2 },
-          { to: '/student/od', label: 'My OD Requests', icon: Clock },
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/student/events', label: 'Discover Events', icon: Calendar },
+          { to: '/student/my-events', label: 'My Events', icon: CheckCircle2 },
+          { to: '/student/od', label: 'My OD', icon: Clock },
           { to: '/student/certificates', label: 'Certificates', icon: Award },
-          { to: '/student/badges', label: 'Badges & Passport', icon: Sparkles },
+          { to: '/student/badges', label: 'Badges', icon: Sparkles },
+          { to: '/student/notifications', label: 'Notifications', icon: Bell, badge: unreadNotifCount },
+          { to: '/student/analytics', label: 'Analytics', icon: Layers },
         ];
     }
   };
@@ -169,14 +177,21 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   isActive
                     ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-600'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                <span className="truncate">{item.label}</span>
+                <div className="flex items-center space-x-2.5 truncate">
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <span className="truncate">{item.label}</span>
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-bold bg-blue-600 text-white rounded-full">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -220,11 +235,16 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             </div>
             <button
               type="button"
+              onClick={() => navigate('/student/notifications')}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors relative cursor-pointer"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              {unreadNotifCount > 0 && (
+                <span className="absolute top-1 right-1 px-1 min-w-[14px] text-[9px] font-bold text-white bg-blue-600 rounded-full flex items-center justify-center">
+                  {unreadNotifCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
