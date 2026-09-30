@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-from app.routers import auth_router, timetable_router, od_router, club_router, event_router
+from app.routers import auth_router, timetable_router, od_router, club_router, event_router, badge_router, certificate_router, notification_router, analytics_router, messaging_router
 from app.seed import seed_database
 
 # Create DB tables
@@ -37,6 +37,16 @@ app.include_router(timetable_router.router)
 app.include_router(od_router.router)
 app.include_router(club_router.router)
 app.include_router(event_router.router)
+app.include_router(badge_router.router)
+app.include_router(certificate_router.router)
+app.include_router(notification_router.router)
+app.include_router(analytics_router.router)
+app.include_router(messaging_router.router)
+
+
+
+
+
 
 @app.on_event("startup")
 def on_startup():

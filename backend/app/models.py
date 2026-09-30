@@ -233,8 +233,11 @@ class Notification(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(String(50), nullable=True)
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
+    entity_type = Column(String(50), nullable=True)
+    entity_id = Column(Integer, nullable=True)
     link = Column(String(255), nullable=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -242,20 +245,22 @@ class Notification(Base):
     user = relationship("User", back_populates="notifications")
 
 
+
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=True)
-    subject = Column(String(255), nullable=False)
-    body = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    context_type = Column(String(50), nullable=False, index=True)  # EVENT, OD_REQUEST
+    context_id = Column(Integer, nullable=False, index=True)
+    message = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False, index=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
 
-    sender = relationship("User", foreign_keys=[sender_id])
-    receiver = relationship("User", foreign_keys=[receiver_id])
-    club = relationship("Club")
+    sender = relationship("User", foreign_keys=[sender_id], backref="sent_messages")
+    recipient = relationship("User", foreign_keys=[recipient_id], backref="received_messages")
+
 
 
 class Certificate(Base):
@@ -271,6 +276,9 @@ class Certificate(Base):
 
     event = relationship("Event", back_populates="certificates")
     student = relationship("User", back_populates="certificates")
+
+    __table_args__ = (UniqueConstraint('event_id', 'student_id', name='_certificate_event_student_uc'),)
+
 
 
 class Badge(Base):

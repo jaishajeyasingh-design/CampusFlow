@@ -1,65 +1,92 @@
 import api from './api';
-import type { Event, Club, RegisterEventResponse, EventRegistration } from '../types';
-
-const REG_STORAGE_KEY_PREFIX = 'campusflow_student_registrations_';
+import type {
+  Event,
+  Club,
+  RegisterEventResponse,
+  EventRegistration,
+  EventCreate,
+  EventApprovalRequest,
+  EventRejectRequest,
+} from '../types';
 
 export const eventsService = {
-  // Fetch all events (Backend automatically restricts to APPROVED events when user is STUDENT)
+  // Fetch all events
   async getEvents(): Promise<Event[]> {
     const res = await api.get<Event[]>('/events');
     return res.data;
   },
 
-  // Fetch all clubs to correlate event club details
+  // Fetch event details by ID
+  async getEventById(eventId: number): Promise<Event> {
+    const res = await api.get<Event>(`/events/${eventId}`);
+    return res.data;
+  },
+
+  // Fetch all clubs
   async getClubs(): Promise<Club[]> {
     const res = await api.get<Club[]>('/clubs');
     return res.data;
   },
 
-  // Find a specific event by ID by querying events and correlating with club info
-  async getEventById(eventId: number): Promise<{ event: Event; club?: Club } | null> {
-    const [events, clubs] = await Promise.all([
-      this.getEvents(),
-      this.getClubs(),
-    ]);
-
-    const event = events.find((e) => e.id === eventId);
-    if (!event) return null;
-
-    const club = clubs.find((c) => c.id === event.club_id);
-    return { event: { ...event, club }, club };
+  // Fetch student's own registered events (Source of truth)
+  async getMyEvents(): Promise<EventRegistration[]> {
+    const res = await api.get<EventRegistration[]>('/events/my');
+    return res.data;
   },
 
-  // Register the authenticated student for an event using real backend endpoint
+  // Register for an event
   async registerForEvent(eventId: number): Promise<RegisterEventResponse> {
     const res = await api.post<RegisterEventResponse>(`/events/${eventId}/register`);
     return res.data;
   },
 
-  // Session/Local registration tracking (since GET /api/events/my is not yet implemented on backend)
-  getSessionRegistrations(studentId: number): EventRegistration[] {
-    try {
-      const data = localStorage.getItem(`${REG_STORAGE_KEY_PREFIX}${studentId}`);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+  // Create event (DRAFT status)
+  async createEvent(payload: EventCreate): Promise<Event> {
+    const res = await api.post<Event>('/events', payload);
+    return res.data;
   },
 
-  saveSessionRegistration(studentId: number, reg: EventRegistration): void {
-    try {
-      const existing = this.getSessionRegistrations(studentId);
-      const updated = existing.filter((item) => item.event_id !== reg.event_id);
-      updated.push(reg);
-      localStorage.setItem(`${REG_STORAGE_KEY_PREFIX}${studentId}`, JSON.stringify(updated));
-    } catch (err) {
-      console.error('Failed to save session registration:', err);
-    }
+  // Submit event for faculty approval
+  async submitEvent(id: number): Promise<Event> {
+    const res = await api.post<Event>(`/events/${id}/submit`);
+    return res.data;
   },
 
-  isRegisteredLocally(studentId: number, eventId: number): boolean {
-    const regs = this.getSessionRegistrations(studentId);
-    return regs.some((r) => r.event_id === eventId);
+  // Approve event (Faculty / Admin)
+  async approveEvent(id: number, payload?: EventApprovalRequest): Promise<Event> {
+    const res = await api.post<Event>(`/events/${id}/approve`, payload || { status: 'APPROVED' });
+    return res.data;
+  },
+
+  // Reject event (Faculty / Admin)
+  async rejectEvent(id: number, reason: string): Promise<Event> {
+    const payload: EventRejectRequest = { reason };
+    const res = await api.post<Event>(`/events/${id}/reject`, payload);
+    return res.data;
+  },
+
+  // Resubmit rejected event
+  async resubmitEvent(id: number): Promise<Event> {
+    const res = await api.post<Event>(`/events/${id}/resubmit`);
+    return res.data;
+  },
+
+  // Start event (Set status to ONGOING)
+  async startEvent(id: number): Promise<Event> {
+    const res = await api.post<Event>(`/events/${id}/start`);
+    return res.data;
+  },
+
+  // Complete event (Set status to COMPLETED)
+  async completeEvent(id: number): Promise<Event> {
+    const res = await api.post<Event>(`/events/${id}/complete`);
+    return res.data;
+  },
+
+  // Cancel event (Set status to CANCELLED)
+  async cancelEvent(id: number): Promise<Event> {
+    const res = await api.post<Event>(`/events/${id}/cancel`);
+    return res.data;
   },
 };
 

@@ -43,11 +43,13 @@ export const EventDetails: React.FC = () => {
         setLoading(false);
         return;
       }
-      setEvent(result.event);
-      setClub(result.club || null);
+      setEvent(result);
+      if (result.club) {
+        setClub(result.club);
+      }
 
       if (user) {
-        const regs = eventsService.getSessionRegistrations(user.id);
+        const regs = await eventsService.getMyEvents();
         const match = regs.find((r) => r.event_id === eventId);
         setExistingReg(match || null);
       }
@@ -72,18 +74,9 @@ export const EventDetails: React.FC = () => {
     try {
       const res = await eventsService.registerForEvent(event.id);
       
-      const newReg: EventRegistration = {
-        id: res.registration_id,
-        event_id: event.id,
-        student_id: user.id,
-        status: 'REGISTERED',
-        qr_code: res.qr_code,
-        registered_at: new Date().toISOString(),
-        event: event,
-      };
-
-      eventsService.saveSessionRegistration(user.id, newReg);
-      setExistingReg(newReg);
+      const regs = await eventsService.getMyEvents();
+      const match = regs.find((r) => r.event_id === event.id);
+      setExistingReg(match || null);
       setRegSuccess(`Registration confirmed! Your QR code token is: ${res.qr_code}`);
     } catch (err: any) {
       setRegError(err.response?.data?.detail || 'Registration failed.');

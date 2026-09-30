@@ -54,7 +54,8 @@ export const DiscoverEvents: React.FC = () => {
       setClubs(fetchedClubs);
 
       if (user) {
-        setRegistrations(eventsService.getSessionRegistrations(user.id));
+        const myRegs = await eventsService.getMyEvents();
+        setRegistrations(myRegs);
       }
     } catch (err: any) {
       console.error('Failed to load discover events:', err);
@@ -75,19 +76,9 @@ export const DiscoverEvents: React.FC = () => {
     setRegError(null);
     try {
       const result = await eventsService.registerForEvent(registeringEvent.id);
-      
-      const newReg: EventRegistration = {
-        id: result.registration_id,
-        event_id: registeringEvent.id,
-        student_id: user.id,
-        status: 'REGISTERED',
-        qr_code: result.qr_code,
-        registered_at: new Date().toISOString(),
-        event: registeringEvent,
-      };
 
-      eventsService.saveSessionRegistration(user.id, newReg);
-      setRegistrations(eventsService.getSessionRegistrations(user.id));
+      const updatedRegs = await eventsService.getMyEvents();
+      setRegistrations(updatedRegs);
 
       const eventRef = registeringEvent;
       setRegisteringEvent(null);

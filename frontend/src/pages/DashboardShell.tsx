@@ -1,10 +1,13 @@
 import React from 'react';
 import { useAuth } from '../context/useAuth';
 import { StudentDashboard } from './student/StudentDashboard';
+import { ClubAdminDashboard } from './club_admin/ClubAdminDashboard';
+import { FacultyDashboard } from './faculty/FacultyDashboard';
+import { SuperAdminDashboard } from './super_admin/SuperAdminDashboard';
 
 import { 
-  Users, Shield, Calendar, Award, Clock, FileText, 
-  Sparkles, CheckCircle2, AlertTriangle
+  Users, Shield, Calendar, 
+  Sparkles, CheckCircle2
 } from 'lucide-react';
 
 export const DashboardShell: React.FC = () => {
@@ -16,6 +19,17 @@ export const DashboardShell: React.FC = () => {
     return <StudentDashboard />;
   }
 
+  if (user.system_role === 'CLUB_ADMIN') {
+    return <ClubAdminDashboard />;
+  }
+
+  if (user.system_role === 'FACULTY') {
+    return <FacultyDashboard />;
+  }
+
+  if (user.system_role === 'SUPER_ADMIN') {
+    return <SuperAdminDashboard />;
+  }
 
   const roleBadgeStyles: Record<string, string> = {
     SUPER_ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -53,14 +67,6 @@ export const DashboardShell: React.FC = () => {
 
       {/* Role-Specific Overview Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {user.system_role === 'SUPER_ADMIN' && (
-          <>
-            <StatCard title="System Users" value="6 Active" icon={Users} colorClass="bg-rose-50 text-rose-600" />
-            <StatCard title="Clubs Registered" value="1 Club" icon={Shield} colorClass="bg-purple-50 text-purple-600" />
-            <StatCard title="Active Timetables" value="1 Structure" icon={Clock} colorClass="bg-emerald-50 text-emerald-600" />
-            <StatCard title="System Audit Logs" value="Verified" icon={FileText} colorClass="bg-amber-50 text-amber-600" />
-          </>
-        )}
 
         {user.system_role === 'ADMIN' && (
           <>
@@ -70,26 +76,7 @@ export const DashboardShell: React.FC = () => {
             <StatCard title="Analytics Health" value="100% Operational" icon={Sparkles} colorClass="bg-emerald-50 text-emerald-600" />
           </>
         )}
-
-        {user.system_role === 'CLUB_ADMIN' && (
-          <>
-            <StatCard title="Club Managed" value="Coding Club" icon={Shield} colorClass="bg-amber-50 text-amber-600" />
-            <StatCard title="Events Created" value="4 Events" icon={Calendar} colorClass="bg-blue-50 text-blue-600" />
-            <StatCard title="Dynamic Roles" value="2 Roles" icon={Users} colorClass="bg-purple-50 text-purple-600" />
-            <StatCard title="Certificates Issued" value="Ready" icon={Award} colorClass="bg-emerald-50 text-emerald-600" />
-          </>
-        )}
-
-        {user.system_role === 'FACULTY' && (
-          <>
-            <StatCard title="Pending Approvals" value="1 Event" icon={AlertTriangle} colorClass="bg-amber-50 text-amber-600" />
-            <StatCard title="Pending OD Requests" value="1 OD Request" icon={Clock} colorClass="bg-blue-50 text-blue-600" />
-            <StatCard title="Mentorship Scope" value="2 Students" icon={Users} colorClass="bg-emerald-50 text-emerald-600" />
-            <StatCard title="Faculty Messages" value="Inbox Ready" icon={FileText} colorClass="bg-purple-50 text-purple-600" />
-          </>
-        )}
       </div>
-
 
       {/* Module Architecture Status Panel */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">

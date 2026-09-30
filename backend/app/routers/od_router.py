@@ -165,6 +165,19 @@ def create_od_request(
     db.add(audit)
 
     db.commit()
+
+    # Trigger notification to mentor
+    from app.services import notification_service
+    notification_service.create_notification(
+        db,
+        user_id=mentor_id,
+        title="New OD Request",
+        message=f"Student {current_user.full_name} submitted an OD request for event '{event.title}'.",
+        type="OD_REQUESTED",
+        entity_type="OD_REQUEST",
+        entity_id=new_od.id
+    )
+
     db.refresh(new_od)
     return new_od
 
@@ -244,5 +257,26 @@ def approve_or_reject_od(
     )
     db.add(audit)
     db.commit()
+
+    # Trigger notification to student
+    from app.services import notification_service
+    event_title = od_req.event.title if od_req.event else "Event"
+    notif_type = "OD_APPROVED" if approval_in.status == "APPROVED" else "OD_REJECTED"
+    notif_title = "OD Request Approved" if approval_in.status == "APPROVED" else "OD Request Rejected"
+    notif_msg = f"Your OD request for '{event_title}' has been approved." if approval_in.status == "APPROVED" else f"Your OD request for '{event_title}' was rejected."
+    if approval_in.status == "REJECTED" and approval_in.mentor_remark:
+        notif_msg += f" Remark: {approval_in.mentor_remark}"
+
+    notification_service.create_notification(
+        db,
+        user_id=od_req.student_id,
+        title=notif_title,
+        message=notif_msg,
+        type=notif_type,
+        entity_type="OD_REQUEST",
+        entity_id=od_req.id
+    )
+
     db.refresh(od_req)
     return od_req
+

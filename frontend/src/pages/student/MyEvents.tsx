@@ -25,7 +25,7 @@ export const MyEvents: React.FC = () => {
   // Ticket viewing modal
   const [selectedTicket, setSelectedTicket] = useState<{
     registration: EventRegistration;
-    event?: Event;
+    event?: Event | null;
     club?: Club;
   } | null>(null);
 
@@ -33,16 +33,14 @@ export const MyEvents: React.FC = () => {
     if (!user) return;
     try {
 
-      const [fetchedEvents, fetchedClubs] = await Promise.all([
+      const [fetchedEvents, fetchedClubs, fetchedRegs] = await Promise.all([
         eventsService.getEvents(),
         eventsService.getClubs(),
+        eventsService.getMyEvents(),
       ]);
       setEvents(fetchedEvents);
       setClubs(fetchedClubs);
-
-      // Load session-persisted registrations from real POST calls
-      const sessionRegs = eventsService.getSessionRegistrations(user.id);
-      setRegistrations(sessionRegs);
+      setRegistrations(fetchedRegs);
     } catch (err: any) {
       console.error('Failed to load registered events:', err);
       setError(err.response?.data?.detail || 'Unable to retrieve event registration records.');
